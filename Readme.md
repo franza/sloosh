@@ -1,7 +1,31 @@
-# Soap [![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url]
-> A SOAP client and server for node.js.
+##About this fork
 
-This module lets you connect to web services using SOAP.  It also provides a server that allows you to run your own SOAP services.
+This repository is a fork of [this repo](https://github.com/vpulim/node-soap). I decided to fork that because I needed changes in this module which break the backward compatibility of the module.
+The only thing that was chanegd is the way module handles the metainformation of response:
+
+###Original
+
+```javascript
+  client.someMethod(args, function (err, result) {
+    // `result` is disirealized response
+    // client.lastRequest, client.lastResponse - raw XML request and response
+  });
+```
+
+###Now it looks like this
+```javascript
+  client.someMethod(args, function (err, result) {
+    // `result` is disirealized response
+    // `result.$meta` is a property that stores the metainformation about the request and response.
+    // `result.$meta.request` and `result.$meta.response` both have same structure:
+    //    { xml: String, headers: Object, dto: Object } where
+    //    1. xml - is an XML representation of request/response
+    //    2. headers - HTTP headers used in request/got in response
+    //    3. dto - deserialized request/response
+  });
+```
+
+Therefore `client` object won't be mutated after requests staying idempotent object.
 
 ## Features:
 
@@ -272,14 +296,12 @@ as default request options to the constructor:
  - `namespace`      prefix of xml namespace
  - `xmlns`          URI
 
-### Client.*lastRequest* - the property that contains last full soap request for client logging
-
 ### Client Events
 Client instances emit the following events:
 
-* request - Emitted before a request is sent. The event handler receives the 
+* request - Emitted before a request is sent. The event handler receives the
 entire Soap request (Envelope) including headers.
-* message - Emitted before a request is sent. The event handler receives the 
+* message - Emitted before a request is sent. The event handler receives the
 Soap body contents. Useful if you don't want to log /store Soap headers.
 * soapError - Emitted when an erroneous response is received.
   Useful if you want to globally log errors.
