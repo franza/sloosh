@@ -131,11 +131,12 @@ function generateTest(name, methodName, wsdlPath, headerJSON, securityJSON, requ
       if (securityJSON && securityJSON.type === 'ws') {
         client.setSecurity(new WSSecurity(securityJSON.username, securityJSON.password));
       }
-      client[methodName](requestJSON, function(err, json, body, soapHeader){
+      client[methodName](requestJSON, function(err, json){
         if(requestJSON){
           if (err) {
             assert.deepEqual(err.root, responseJSON);
           } else {
+            var soapHeader = json.$meta.soapHeader;
             // assert.deepEqual(json, responseJSON);
             assert.equal(JSON.stringify(json), JSON.stringify(responseJSON));
             if(responseSoapHeaderJSON){

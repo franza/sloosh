@@ -5,6 +5,10 @@ var fs = require('fs'),
     http = require('http'),
     assert = require('assert');
 
+function getMeta(err, result) {
+  return result ? result.$meta : err ? err.meta : null;
+}
+
 describe('SOAP Client', function() {
   it('should error on invalid host', function(done) {
     soap.createClient('http://localhost:1', function(err, client) {
@@ -81,8 +85,7 @@ describe('SOAP Client', function() {
         assert.ok(!err);
 
         client.MyOperation({}, function(err, result) {
-          assert.notEqual(client.lastRequestHeaders.Host.indexOf(':' + port), -1);
-
+          assert.notEqual(err.meta.request.headers.Host.indexOf(':' + port), -1);
           done();
         }, null, {'test-header': 'test'});
       }, baseUrl);
@@ -94,8 +97,7 @@ describe('SOAP Client', function() {
         assert.ok(!err);
 
         client.MyOperation({}, function(err, result) {
-          assert.equal(client.lastRequestHeaders.Host.indexOf(':80'), -1);
-
+          assert.equal(err.meta.request.headers.Host.indexOf(':80'), -1);
           done();
         }, null, {'test-header': 'test'});
       }, 'http://127.0.0.1');
@@ -106,8 +108,8 @@ describe('SOAP Client', function() {
         assert.ok(client);
         assert.ok(!err);
 
-        client.MyOperation({}, function() {
-          assert.equal(client.lastRequestHeaders.Host.indexOf(':443'), -1);
+        client.MyOperation({}, function(err, result) {
+          assert.equal(err.meta.request.headers.Host.indexOf(':443'), -1);
           done();
         }, null, {'test-header': 'test'});
       }, 'https://127.0.0.1');
@@ -118,8 +120,8 @@ describe('SOAP Client', function() {
         assert.ok(client);
         assert.ok(!err);
 
-        client.MyOperation({}, function() {
-          assert.ok(client.lastRequestHeaders.Host.indexOf(':443') > -1);
+        client.MyOperation({}, function(err, result) {
+          assert.ok(err.meta.request.headers.Host.indexOf(':443') > -1);
           done();
         }, null, {'test-header': 'test'});
       }, 'https://127.0.0.1:443');
@@ -131,9 +133,10 @@ describe('SOAP Client', function() {
         assert.ok(!err);
 
         client.MyOperation({}, function(err, result) {
-          assert.ok(result);
-          assert.ok(client.lastResponseHeaders);
-          assert.equal(client.lastResponseHeaders.status, 'pass');
+          var meta = getMeta(err, result);
+          assert.ok(meta);
+          assert.ok(meta.response.headers);
+          assert.equal(meta.response.headers.status, 'pass');
 
           done();
         }, null, {'test-header': 'test'});
@@ -146,9 +149,10 @@ describe('SOAP Client', function() {
         assert.ok(!err);
 
         client.MyOperation({}, function(err, result) {
-          assert.ok(result);
-          assert.ok(client.lastResponseHeaders);
-          assert.equal(client.lastResponseHeaders.status, 'fail');
+          var meta = getMeta(err, result);
+          assert.ok(meta);
+          assert.ok(meta.response.headers);
+          assert.equal(meta.response.headers.status, 'fail');
 
           done();
         }, null, {'test-header': 'testBad'});
@@ -161,9 +165,10 @@ describe('SOAP Client', function() {
         assert.ok(!err);
 
         client.MyOperation({}, function(err, result) {
-          assert.ok(result);
-          assert.ok(client.lastResponse);
-          assert.ok(client.lastResponseHeaders);
+          var meta = getMeta(err, result);
+          assert.ok(meta);
+          assert.ok(meta.response.xml);
+          assert.ok(meta.response.headers);
 
           done();
         }, null, {'test-header': 'test'});
@@ -175,10 +180,10 @@ describe('SOAP Client', function() {
         assert.ok(client);
         assert.ok(!err);
 
-        client.MyOperation({}, function(err, result, body) {
+        client.MyOperation({}, function(err, result) {
           assert.ok(result);
           assert.ok(!err);
-          assert.ok(body);
+          assert.ok(result.$meta.response.xml);
           done();
         }, null, {"test-header": 'test'});
       }, baseUrl);
@@ -259,15 +264,15 @@ describe('SOAP Client', function() {
 
         var message = '<Request xsi:type="ns1:Ty" xmlns:ns1="xmlnsTy" xmlns="http://www.example.com/v1"></Request>';
         client.MyOperation(data, function(err, result) {
-          assert.ok(client.lastRequest);
-          assert.ok(client.lastMessage);
-          assert.equal(client.lastMessage, message);
+          assert.ok(err.meta.request.xml);
+          assert.ok(err.meta.request.message);
+          assert.equal(err.meta.request.message, message);
 
           delete data.attributes.xsi_type.namespace;
           client.MyOperation(data, function(err, result) {
-            assert.ok(client.lastRequest);
-            assert.ok(client.lastMessage);
-            assert.equal(client.lastMessage, message);
+            assert.ok(err.meta.request.xml);
+            assert.ok(err.meta.request.message);
+            assert.equal(err.meta.request.message, message);
 
             done();
           });
@@ -318,8 +323,12 @@ describe('SOAP Client', function() {
       soap.createClient(__dirname + '/wsdl/default_namespace.wsdl', function (err, client) {
         client.MyOperation({}, function(err, result) {
           assert.ok(err);
-          assert.ok(err.response);
-          assert.equal(err.body, '{"tempResponse":"temp"}');
+          assert.ok(err.meta.request);
+          assert.ok(err.meta.request.dto);
+          assert.ok(err.meta.request.xml);
+          assert.ok(err.meta.response);
+          assert.ok(!err.meta.response.dto);
+          assert.equal(err.meta.response.xml, '{"tempResponse":"temp"}');
           done();
         });
       }, baseUrl);
@@ -350,8 +359,12 @@ describe('SOAP Client', function() {
       soap.createClient(__dirname + '/wsdl/default_namespace.wsdl', function (err, client) {
         client.MyOperation({}, function(err, result) {
           assert.ok(err);
-          assert.ok(err.response);
-          assert.ok(err.body);
+          assert.ok(err.meta.request);
+          assert.ok(err.meta.request.dto);
+          assert.ok(err.meta.request.xml);
+          assert.ok(err.meta.response);
+          assert.ok(!err.meta.response.dto);
+          assert.equal(err.meta.response.xml, '{"tempResponse":"temp"}');
           done();
         });
       }, baseUrl);

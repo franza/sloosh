@@ -57,7 +57,7 @@ describe('SOAP Server', function() {
       test.baseUrl =
         'http://' + test.server.address().address + ":" + test.server.address().port;
 
-      //windows return 0.0.0.0 as address and that is not 
+      //windows return 0.0.0.0 as address and that is not
       //valid to use in a request
       if (test.server.address().address === '0.0.0.0' || test.server.address().address === '::') {
         test.baseUrl =
@@ -139,8 +139,9 @@ describe('SOAP Server', function() {
     soap.createClient(test.baseUrl + '/stockquote?wsdl', function(err, client) {
       assert.ok(!err);
       client.addSoapHeader('<Security><Timestamp><Created>2015-02-23T12:00:00.000Z</Created><Expires>2015-02-23T12:05:00.000Z</Expires></Timestamp></Security>');
-      client.GetLastTradePrice({ tickerSymbol: 'AAPL'}, function(err, result, raw, soapHeader) {
+      client.GetLastTradePrice({ tickerSymbol: 'AAPL'}, function(err, result) {
         assert.ok(!err);
+        var soapHeader = result.$meta.soapHeader;
         assert.ok(soapHeader && soapHeader.Security && soapHeader.Security.Timestamp);
         done();
       });
@@ -262,7 +263,7 @@ describe('SOAP Server', function() {
       assert.ok(!err);
       client.SetTradePrice({ tickerSymbol: 'GOOG', price: 575.33 }, function(err, result) {
         assert.ok(!err);
-        assert.equal(result,null);
+        assert.deepEqual(result, { });
         done();
       });
     });
