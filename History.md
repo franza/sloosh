@@ -1,3 +1,7 @@
+1.0.0 / 2015-05-19
+=================
+* [ENHANCEMENT] `node-soap` is forked and renamed to `sloosh`. Main changes - different placing of request/response metainformation
+
 0.8.0 / 2015-02-17
 =================
 * [ENHANCEMENT] `node-soap` is now also compatible (and tested) with `node v0.12.0` and `io.js` too. (#571)

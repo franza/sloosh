@@ -1,27 +1,24 @@
-##About this fork
+## About this fork
 
-This repository is a fork of [this repo](https://github.com/vpulim/node-soap). I decided to fork that because I needed changes in this module which break the backward compatibility of the module.
+This repository is a fork of [this repo](https://github.com/vpulim/node-soap). We decided to fork that because we needed changes in this module which break the backward compatibility of the module.
 The only thing that was chanegd is the way module handles the metainformation of response:
 
-###Original
+See [this section](https://github.com/franza/sloosh#response) for more details.
+
+### Original
 
 ```javascript
   client.someMethod(args, function (err, result) {
-    // `result` is disirealized response
+    // `result` is deserialized response
     // client.lastRequest, client.lastResponse - raw XML request and response
   });
 ```
 
-###Now it looks like this
+### Now it looks like this
 ```javascript
   client.someMethod(args, function (err, result) {
-    // `result` is disirealized response
+    // `result` is deserialized response
     // `result.$meta` is a property that stores the metainformation about the request and response.
-    // `result.$meta.request` and `result.$meta.response` both have same structure:
-    //    { xml: String, headers: Object, dto: Object } where
-    //    1. xml - is an XML representation of request/response
-    //    2. headers - HTTP headers used in request/got in response
-    //    3. dto - deserialized request/response
   });
 ```
 
@@ -221,7 +218,7 @@ An instance of Client is passed to the soap.createClient callback.  It is used t
 ```
 
 ### Client.setSecurity(security) - use the specified security protocol
-`node-soap` has several default security protocols.  You can easily add your own
+`sloosh` has several default security protocols.  You can easily add your own
 as well.  The interface is quite simple.  Each protocol defines 2 methods:
 * addOptions - a method that accepts an options arg that is eventually passed directly to `request`
 * toXML - a method that reurns a string of XML.
@@ -264,12 +261,15 @@ as default request options to the constructor:
 ### Client.*method*(args, callback) - call *method* on the SOAP service.
 
 ``` javascript
-  client.MyFunction({name: 'value'}, function(err, result, raw, soapHeader) {
+  client.MyFunction({name: 'value'}, function(err, result) {
       // result is a javascript object
-      // raw is the raw response
-      // soapHeader is the response soap header as a javascript object
-  })
+      // result.$meta is a hidden property to access for metainformation
+  });
+
+  See [this section](https://github.com/franza/sloosh#response) for more details.
 ```
+
+See [Response](Response) section for details.
 ### Client.*service*.*port*.*method*(args, callback[, options]) - call a *method* using a specific *service* and *port*
 
 ``` javascript
@@ -320,7 +320,7 @@ WSSecurity implements WS-Security.  UsernameToken and PasswordText/PasswordDiges
 ```
 
 ## Handling XML Attributes, Value and XML (wsdlOptions).
-Sometimes it is necessary to override the default behaviour of `node-soap` in order to deal with the special requirements
+Sometimes it is necessary to override the default behaviour of `sloosh` in order to deal with the special requirements
 of your code base or a third library you use. Therefore you can use the `wsdlOptions` Object, which is passed in the
 `#createClient()` method and could have any (or all) of the following contents:
 ```javascript
@@ -330,10 +330,10 @@ var wsdlOptions = {
   xmlKey: 'theXml'
 }
 ```
-If nothing (or an empty Object `{}`) is passed to the `#createClient()` method, the `node-soap` defaults (`attributesKey: 'attributes'`, `valueKey: '$value'` and `xmlKey: '$xml'`) are used.
+If nothing (or an empty Object `{}`) is passed to the `#createClient()` method, the `sloosh` defaults (`attributesKey: 'attributes'`, `valueKey: '$value'` and `xmlKey: '$xml'`) are used.
 
 ###Overriding the `value` key
-By default, `node-soap` uses `$value` as key for any parsed XML value which may interfere with your other code as it
+By default, `sloosh` uses `$value` as key for any parsed XML value which may interfere with your other code as it
 could be some reserved word, or the `$` in general cannot be used for a key to start with.
 
 You can define your own `valueKey` by passing it in the `wsdl_options` to the createClient call like so:
@@ -348,7 +348,7 @@ soap.createClient(__dirname + '/wsdl/default_namespace.wsdl', wsdlOptions, funct
 ```
 
 ###Overriding the `xml` key
-As `valueKey`, `node-soap` uses `$xml` as key. The xml key is used to pass XML Object without adding namespace or parsing the string.
+As `valueKey`, `sloosh` uses `$xml` as key. The xml key is used to pass XML Object without adding namespace or parsing the string.
 
 Example :
 
@@ -428,7 +428,7 @@ namespace prefix is used to identify this Element. This is not much of a problem
 (inline or in a separate file). If there are more `schema` files, the `tns:` in the generated `soap` file resolved mostly to the parent `wsdl` file,
  which was obviously wrong.
 
- `node-soap` now handles namespace prefixes which shouldn't be resolved (because it's not necessary) as so called `ignoredNamespaces`
+ `sloosh` now handles namespace prefixes which shouldn't be resolved (because it's not necessary) as so called `ignoredNamespaces`
  which default to an Array of 3 Strings (`['tns', 'targetNamespace', 'typedNamespace']`).
 
  If this is not sufficient for your purpose you can easily add more namespace prefixes to this Array, or override it in its entirety
@@ -455,15 +455,44 @@ namespace prefix is used to identify this Element. This is not much of a problem
  ```
  This would override the default `ignoredNamespaces` of the `WSDL` processor to `['namespaceToIgnore', 'someOtherNamespace']`. (This shouldn't be necessary, anyways).
 
+## Response
+
+Response is an object which is deserialized from the XML response. It contains property `$meta` which contains metainformation about sent request and received response.
+`$meta` lives in object's prototype, so it is not enumerable and will not be included in the result of `JSON.stringify`.
+
+Errors returned from the methods of client also contain metainformation in `meta` field.
+
+Structure of `meta`:
+
+```
+{
+  request: {
+    xml: String,        // an XML representation of request
+    headers: Object,    // HTTP headers of request
+    dto: Object,        // the original request object
+    message: String     // the body of SOAP request
+  },
+  response: {
+    xml: String,        // an XML representation of response
+    headers: Object,    // HTTP headers of response
+    dto: Object         // deserialized response object
+    statusCode: Number  // status code of HTTP response
+  },
+  soapHeader: String    // the response soap header as a javascript object
+}
+```
+
+Some of the properties above may be nullable, refer to the sources for details.
+
 ## Contributors
 
  * Author: [Vinay Pulim](https://github.com/vpulim)
- * Lead Maintainer: [Joe Spencer](https://github.com/jsdevel)
- * [All Contributors](https://github.com/vpulim/node-soap/graphs/contributors)
+ * Maintainers:
+   * [Yusup Abdullaev](https://github.com/franza)
+   * [Alexander Maximov](https://github.com/mavricus)
+
+Many thanks to original [contributors](https://github.com/vpulim/node-soap/graphs/contributors) of [node-soap](https://github.com/vpulim/node-soap).
 
 [downloads-image]: http://img.shields.io/npm/dm/soap.svg
 [npm-url]: https://npmjs.org/package/soap
 [npm-image]: http://img.shields.io/npm/v/soap.svg
-
-[travis-url]: https://travis-ci.org/vpulim/node-soap
-[travis-image]: http://img.shields.io/travis/vpulim/node-soap.svg
