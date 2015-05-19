@@ -1,5 +1,9 @@
 1.0.2 / 2015-05-19
 =================
+* [ENHANCEMENT] removed usage of missing `debug` module
+
+1.0.2 / 2015-05-19
+=================
 * [ENHANCEMENT] excluded `dto` property from meta
 
 1.0.0 / 2015-05-19
