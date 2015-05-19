@@ -324,10 +324,8 @@ describe('SOAP Client', function() {
         client.MyOperation({}, function(err, result) {
           assert.ok(err);
           assert.ok(err.meta.request);
-          assert.ok(err.meta.request.dto);
           assert.ok(err.meta.request.xml);
           assert.ok(err.meta.response);
-          assert.ok(!err.meta.response.dto);
           assert.equal(err.meta.response.xml, '{"tempResponse":"temp"}');
           done();
         });
@@ -360,10 +358,8 @@ describe('SOAP Client', function() {
         client.MyOperation({}, function(err, result) {
           assert.ok(err);
           assert.ok(err.meta.request);
-          assert.ok(err.meta.request.dto);
           assert.ok(err.meta.request.xml);
           assert.ok(err.meta.response);
-          assert.ok(!err.meta.response.dto);
           assert.equal(err.meta.response.xml, '{"tempResponse":"temp"}');
           done();
         });

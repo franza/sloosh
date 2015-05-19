@@ -469,13 +469,11 @@ Structure of `meta`:
   request: {
     xml: String,        // an XML representation of request
     headers: Object,    // HTTP headers of request
-    dto: Object,        // the original request object
     message: String     // the body of SOAP request
   },
   response: {
     xml: String,        // an XML representation of response
     headers: Object,    // HTTP headers of response
-    dto: Object         // deserialized response object
     statusCode: Number  // status code of HTTP response
   },
   soapHeader: String    // the response soap header as a javascript object

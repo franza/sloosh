@@ -1,6 +1,6 @@
 {
   "name": "sloosh",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A minimal node SOAP client with graceful metainformation handling",
   "engines": {
     "node": ">=0.8.0"

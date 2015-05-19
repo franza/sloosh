@@ -1,3 +1,7 @@
+1.0.2 / 2015-05-19
+=================
+* [ENHANCEMENT] excluded `dto` property from meta
+
 1.0.0 / 2015-05-19
 =================
 * [ENHANCEMENT] `node-soap` is forked and renamed to `sloosh`. Main changes - different placing of request/response metainformation
