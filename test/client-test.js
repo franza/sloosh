@@ -56,6 +56,43 @@ describe('SOAP Client', function() {
     });
   });
 
+  describe('Fault response', function() {
+    var server = null;
+    var hostname = '127.0.0.1';
+    var port = 15099;
+    var baseUrl = 'http://' + hostname + ':' + port;
+    var body = 'some invalid stuff';
+
+    before(function(done) {
+      server = http.createServer(function (req, res) {
+        res.statusCode = 200;
+        res.write(body, 'utf8');
+        res.end();
+      }).listen(port, hostname, done);
+    });
+
+    after(function(done) {
+      server.close();
+      server = null;
+      done();
+    });
+
+    it('should yield an error in callback', function(done) {
+      soap.createClient(__dirname+'/wsdl/default_namespace.wsdl', function(err, client) {
+        assert.ok(client);
+        assert.ok(!err);
+
+        client.MyOperation({}, function(err, result) {
+          assert.ok(!result);
+          assert.ok(err);
+          assert.ok(err.meta.response.xml === body);
+
+          done();
+        });
+      }, baseUrl);
+    });
+  });
+
   describe('Headers in request and last response', function() {
     var server = null;
     var hostname = '127.0.0.1';
